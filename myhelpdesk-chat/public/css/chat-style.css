@@ -1,0 +1,1528 @@
+/**
+ * MyHelpDesk Chat – Frontend Chat Widget Styles
+ *
+ * Self-contained, zero external dependencies.
+ * All classes prefixed with .mhd- to avoid host-page collisions.
+ * Themeable via CSS custom properties.
+ */
+
+/* ------------------------------------------------------------------ */
+/*  0. CSS Custom Properties (Theming)                                */
+/* ------------------------------------------------------------------ */
+:root {
+    --mhd-primary-color: #0073aa;
+    --mhd-primary-hover: #005f8d;
+    --mhd-primary-light: #e8f0fe;
+    --mhd-secondary-color: #23282d;
+    --mhd-text-color: #1d2327;
+    --mhd-text-muted: #72777c;
+    --mhd-bg-color: #ffffff;
+    --mhd-border-color: #e2e4e7;
+    --mhd-border-radius: 12px;
+    --mhd-font-size: 14px;
+    --mhd-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    --mhd-widget-width: 380px;
+    --mhd-widget-height: 600px;
+    --mhd-widget-bottom: 20px;
+    --mhd-widget-right: 20px;
+    --mhd-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --mhd-bubble-size: 60px;
+    --mhd-transition: 0.25s ease;
+    --mhd-agent-bubble-bg: #f0f0f1;
+    --mhd-agent-bubble-color: #1d2327;
+    --mhd-user-bubble-bg: var(--mhd-primary-color);
+    --mhd-user-bubble-color: #ffffff;
+}
+
+/* ------------------------------------------------------------------ */
+/*  1. Reset scope – prevent host-page leakage                        */
+/* ------------------------------------------------------------------ */
+.mhd-widget-root,
+.mhd-widget-root *,
+.mhd-widget-root *::before,
+.mhd-widget-root *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: var(--mhd-font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.mhd-widget-root {
+    font-size: var(--mhd-font-size);
+    line-height: 1.5;
+    color: var(--mhd-text-color);
+    z-index: 999999;
+    position: fixed;
+    bottom: var(--mhd-widget-bottom);
+    right: var(--mhd-widget-right);
+}
+
+/* ------------------------------------------------------------------ */
+/*  2. Chat Bubble Button                                             */
+/* ------------------------------------------------------------------ */
+.mhd-chat-bubble {
+    width: var(--mhd-bubble-size);
+    height: var(--mhd-bubble-size);
+    border-radius: 50%;
+    background: var(--mhd-primary-color);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform var(--mhd-transition), box-shadow var(--mhd-transition), background var(--mhd-transition);
+    outline: none;
+}
+
+.mhd-chat-bubble:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    background: var(--mhd-primary-hover);
+}
+
+.mhd-chat-bubble:active {
+    transform: scale(0.96);
+}
+
+.mhd-chat-bubble svg {
+    width: 28px;
+    height: 28px;
+    fill: currentColor;
+    transition: transform var(--mhd-transition);
+}
+
+.mhd-chat-bubble.mhd-bubble-open svg {
+    transform: rotate(90deg);
+}
+
+/* Unread badge */
+.mhd-chat-bubble-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #dc3232;
+    border-radius: 10px;
+    padding: 0 5px;
+    pointer-events: none;
+    animation: mhd-badge-pulse 2s infinite;
+}
+
+@keyframes mhd-badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.15); }
+}
+
+/* Tooltip */
+.mhd-chat-bubble-tooltip {
+    position: absolute;
+    right: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--mhd-secondary-color);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--mhd-transition);
+}
+
+.mhd-chat-bubble:hover .mhd-chat-bubble-tooltip {
+    opacity: 1;
+}
+
+.mhd-chat-bubble-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -6px;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-left-color: var(--mhd-secondary-color);
+}
+
+/* ------------------------------------------------------------------ */
+/*  3. Chat Window                                                    */
+/* ------------------------------------------------------------------ */
+.mhd-chat-window {
+    position: absolute;
+    bottom: calc(var(--mhd-bubble-size) + 16px);
+    right: 0;
+    width: var(--mhd-widget-width);
+    height: var(--mhd-widget-height);
+    max-height: calc(100vh - 100px);
+    background: var(--mhd-bg-color);
+    border-radius: var(--mhd-border-radius);
+    box-shadow: var(--mhd-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.95);
+    transform-origin: bottom right;
+    transition: opacity var(--mhd-transition), visibility var(--mhd-transition), transform var(--mhd-transition);
+}
+
+.mhd-chat-window.mhd-chat-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+/* ------------------------------------------------------------------ */
+/*  4. Chat Header                                                    */
+/* ------------------------------------------------------------------ */
+.mhd-chat-header {
+    background: linear-gradient(135deg, var(--mhd-primary-color), var(--mhd-primary-hover));
+    color: #fff;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.mhd-chat-header-avatar {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mhd-chat-header-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.mhd-chat-header-status-dot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--mhd-primary-color);
+}
+
+.mhd-chat-header-status-dot.online  { background: #46b450; }
+.mhd-chat-header-status-dot.offline { background: #999; }
+.mhd-chat-header-status-dot.away    { background: #ffb900; }
+
+.mhd-chat-header-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mhd-chat-header-title {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.mhd-chat-header-subtitle {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 1px;
+}
+
+.mhd-chat-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.mhd-chat-header-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--mhd-transition);
+}
+
+.mhd-chat-header-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.mhd-chat-header-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+/* ------------------------------------------------------------------ */
+/*  5. Pre-Chat Form                                                  */
+/* ------------------------------------------------------------------ */
+.mhd-prechat-form {
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.mhd-prechat-heading {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--mhd-text-color);
+}
+
+.mhd-prechat-desc {
+    font-size: 13px;
+    color: var(--mhd-text-muted);
+    margin-top: -8px;
+}
+
+.mhd-prechat-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.mhd-prechat-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mhd-text-color);
+}
+
+.mhd-prechat-label .mhd-required {
+    color: #dc3232;
+}
+
+.mhd-prechat-input,
+.mhd-prechat-select,
+.mhd-prechat-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid var(--mhd-border-color);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--mhd-text-color);
+    transition: border-color var(--mhd-transition), box-shadow var(--mhd-transition);
+    outline: none;
+    font-family: var(--mhd-font-family);
+}
+
+.mhd-prechat-input:focus,
+.mhd-prechat-select:focus,
+.mhd-prechat-textarea:focus {
+    border-color: var(--mhd-primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.15);
+}
+
+.mhd-prechat-textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.mhd-prechat-gdpr {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--mhd-text-muted);
+    line-height: 1.4;
+}
+
+.mhd-prechat-gdpr input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    flex-shrink: 0;
+    accent-color: var(--mhd-primary-color);
+}
+
+.mhd-prechat-submit {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--mhd-primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background var(--mhd-transition);
+}
+
+.mhd-prechat-submit:hover {
+    background: var(--mhd-primary-hover);
+}
+
+.mhd-prechat-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mhd-prechat-error {
+    font-size: 12px;
+    color: #dc3232;
+}
+
+/* ------------------------------------------------------------------ */
+/*  6. KB Search Area                                                 */
+/* ------------------------------------------------------------------ */
+.mhd-kb-search-area {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--mhd-border-color);
+    flex-shrink: 0;
+}
+
+.mhd-kb-search-input-wrap {
+    position: relative;
+}
+
+.mhd-kb-search-input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    font-size: 13px;
+    border: 1px solid var(--mhd-border-color);
+    border-radius: 8px;
+    background: #f6f7f7;
+    color: var(--mhd-text-color);
+    transition: border-color var(--mhd-transition), background var(--mhd-transition);
+    outline: none;
+    font-family: var(--mhd-font-family);
+}
+
+.mhd-kb-search-input:focus {
+    border-color: var(--mhd-primary-color);
+    background: #fff;
+}
+
+.mhd-kb-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--mhd-text-muted);
+    pointer-events: none;
+}
+
+.mhd-kb-search-icon svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.mhd-kb-results {
+    list-style: none;
+    margin-top: 10px;
+}
+
+.mhd-kb-result-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mhd-border-color);
+}
+
+.mhd-kb-result-item:last-child {
+    border-bottom: none;
+}
+
+.mhd-kb-result-link {
+    font-size: 13px;
+    color: var(--mhd-primary-color);
+    text-decoration: none;
+    display: block;
+    line-height: 1.4;
+    transition: color var(--mhd-transition);
+}
+
+.mhd-kb-result-link:hover {
+    color: var(--mhd-primary-hover);
+    text-decoration: underline;
+}
+
+.mhd-kb-result-snippet {
+    font-size: 12px;
+    color: var(--mhd-text-muted);
+    margin-top: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ */
+/*  7. Messages Area                                                  */
+/* ------------------------------------------------------------------ */
+.mhd-messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+}
+
+.mhd-messages-area::-webkit-scrollbar {
+    width: 5px;
+}
+
+.mhd-messages-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mhd-messages-area::-webkit-scrollbar-thumb {
+    background: #d0d0d0;
+    border-radius: 3px;
+}
+
+/* ------------------------------------------------------------------ */
+/*  8. Message Bubbles                                                */
+/* ------------------------------------------------------------------ */
+.mhd-message {
+    display: flex;
+    gap: 8px;
+    max-width: 85%;
+    animation: mhd-fade-in 0.3s ease;
+}
+
+/* Agent messages – left */
+.mhd-message-agent {
+    align-self: flex-start;
+}
+
+/* User messages – right */
+.mhd-message-user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.mhd-message-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--mhd-agent-bubble-bg);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mhd-text-muted);
+    margin-top: 2px;
+}
+
+.mhd-message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mhd-message-user .mhd-message-avatar {
+    background: var(--mhd-primary-light);
+    color: var(--mhd-primary-color);
+}
+
+.mhd-message-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.mhd-message-sender {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--mhd-text-muted);
+}
+
+.mhd-message-user .mhd-message-sender {
+    text-align: right;
+}
+
+.mhd-message-bubble {
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: var(--mhd-font-size);
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.mhd-message-agent .mhd-message-bubble {
+    background: var(--mhd-agent-bubble-bg);
+    color: var(--mhd-agent-bubble-color);
+    border-bottom-left-radius: 4px;
+}
+
+.mhd-message-user .mhd-message-bubble {
+    background: var(--mhd-user-bubble-bg);
+    color: var(--mhd-user-bubble-color);
+    border-bottom-right-radius: 4px;
+}
+
+.mhd-message-bubble a {
+    color: inherit;
+    text-decoration: underline;
+}
+
+.mhd-message-time {
+    font-size: 10px;
+    color: var(--mhd-text-muted);
+}
+
+.mhd-message-user .mhd-message-time {
+    text-align: right;
+}
+
+/* ------------------------------------------------------------------ */
+/*  9. System Messages                                                */
+/* ------------------------------------------------------------------ */
+.mhd-message-system {
+    align-self: center;
+    max-width: 90%;
+    text-align: center;
+}
+
+.mhd-message-system .mhd-message-bubble {
+    background: transparent;
+    color: var(--mhd-text-muted);
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px dashed var(--mhd-border-color);
+}
+
+/* ------------------------------------------------------------------ */
+/*  10. Typing Indicator                                              */
+/* ------------------------------------------------------------------ */
+.mhd-typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    padding: 6px 0;
+}
+
+.mhd-typing-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--mhd-agent-bubble-bg);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mhd-typing-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mhd-typing-dots {
+    display: flex;
+    gap: 4px;
+    background: var(--mhd-agent-bubble-bg);
+    padding: 10px 16px;
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+}
+
+.mhd-typing-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--mhd-text-muted);
+    animation: mhd-typing-bounce 1.4s ease-in-out infinite;
+}
+
+.mhd-typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.mhd-typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes mhd-typing-bounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    30% {
+        transform: translateY(-6px);
+        opacity: 1;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/*  11. Message Composer                                              */
+/* ------------------------------------------------------------------ */
+.mhd-composer {
+    border-top: 1px solid var(--mhd-border-color);
+    padding: 12px 14px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--mhd-bg-color);
+}
+
+.mhd-composer-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.mhd-composer-textarea {
+    flex: 1;
+    min-height: 40px;
+    max-height: 120px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: var(--mhd-font-family);
+    border: 1px solid var(--mhd-border-color);
+    border-radius: 20px;
+    resize: none;
+    outline: none;
+    color: var(--mhd-text-color);
+    background: #f6f7f7;
+    transition: border-color var(--mhd-transition), background var(--mhd-transition);
+    line-height: 1.4;
+}
+
+.mhd-composer-textarea:focus {
+    border-color: var(--mhd-primary-color);
+    background: #fff;
+}
+
+.mhd-composer-textarea::placeholder {
+    color: var(--mhd-text-muted);
+}
+
+.mhd-composer-send {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--mhd-primary-color);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background var(--mhd-transition), transform var(--mhd-transition);
+}
+
+.mhd-composer-send:hover {
+    background: var(--mhd-primary-hover);
+    transform: scale(1.05);
+}
+
+.mhd-composer-send:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.mhd-composer-send svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.mhd-composer-tools {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px;
+}
+
+.mhd-composer-tool-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mhd-text-muted);
+    transition: background var(--mhd-transition), color var(--mhd-transition);
+}
+
+.mhd-composer-tool-btn:hover {
+    background: #f0f0f1;
+    color: var(--mhd-text-color);
+}
+
+.mhd-composer-tool-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+/* File upload hidden input */
+.mhd-file-upload-input {
+    display: none;
+}
+
+/* ------------------------------------------------------------------ */
+/*  12. Emoji Picker Grid                                             */
+/* ------------------------------------------------------------------ */
+.mhd-emoji-picker {
+    position: absolute;
+    bottom: 100%;
+    left: 14px;
+    right: 14px;
+    background: var(--mhd-bg-color);
+    border: 1px solid var(--mhd-border-color);
+    border-radius: var(--mhd-border-radius);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    max-height: 260px;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: opacity var(--mhd-transition), visibility var(--mhd-transition), transform var(--mhd-transition);
+}
+
+.mhd-emoji-picker.mhd-picker-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.mhd-emoji-picker-search {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--mhd-border-color);
+    flex-shrink: 0;
+}
+
+.mhd-emoji-picker-search input {
+    width: 100%;
+    padding: 7px 10px;
+    font-size: 13px;
+    border: 1px solid var(--mhd-border-color);
+    border-radius: 6px;
+    outline: none;
+    font-family: var(--mhd-font-family);
+}
+
+.mhd-emoji-picker-search input:focus {
+    border-color: var(--mhd-primary-color);
+}
+
+.mhd-emoji-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--mhd-border-color);
+    padding: 0 8px;
+    flex-shrink: 0;
+    overflow-x: auto;
+}
+
+.mhd-emoji-tab {
+    padding: 6px 10px;
+    font-size: 16px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity var(--mhd-transition), border-color var(--mhd-transition);
+}
+
+.mhd-emoji-tab:hover,
+.mhd-emoji-tab.active {
+    opacity: 1;
+    border-bottom-color: var(--mhd-primary-color);
+}
+
+.mhd-emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
+    padding: 8px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.mhd-emoji-item {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background var(--mhd-transition);
+}
+
+.mhd-emoji-item:hover {
+    background: var(--mhd-primary-light);
+}
+
+/* ------------------------------------------------------------------ */
+/*  13. Rating Widget                                                 */
+/* ------------------------------------------------------------------ */
+.mhd-rating-widget {
+    padding: 20px 18px;
+    text-align: center;
+    animation: mhd-fade-in 0.3s ease;
+}
+
+.mhd-rating-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--mhd-text-color);
+    margin-bottom: 6px;
+}
+
+.mhd-rating-subtitle {
+    font-size: 12px;
+    color: var(--mhd-text-muted);
+    margin-bottom: 16px;
+}
+
+.mhd-rating-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.mhd-rating-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--mhd-border-color);
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: border-color var(--mhd-transition), background var(--mhd-transition), transform var(--mhd-transition);
+}
+
+.mhd-rating-btn:hover {
+    transform: scale(1.1);
+}
+
+.mhd-rating-btn.mhd-rating-up:hover,
+.mhd-rating-btn.mhd-rating-up.selected {
+    border-color: #46b450;
+    background: #e6f4ea;
+}
+
+.mhd-rating-btn.mhd-rating-down:hover,
+.mhd-rating-btn.mhd-rating-down.selected {
+    border-color: #dc3232;
+    background: #fce8e6;
+}
+
+.mhd-rating-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.mhd-rating-comment {
+    width: 100%;
+    min-height: 60px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: var(--mhd-font-family);
+    border: 1px solid var(--mhd-border-color);
+    border-radius: 8px;
+    resize: vertical;
+    outline: none;
+    margin-bottom: 12px;
+    color: var(--mhd-text-color);
+}
+
+.mhd-rating-comment:focus {
+    border-color: var(--mhd-primary-color);
+}
+
+.mhd-rating-submit {
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--mhd-primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background var(--mhd-transition);
+}
+
+.mhd-rating-submit:hover {
+    background: var(--mhd-primary-hover);
+}
+
+/* ------------------------------------------------------------------ */
+/*  14. Offline Form                                                  */
+/* ------------------------------------------------------------------ */
+.mhd-offline-form {
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.mhd-offline-icon {
+    text-align: center;
+    font-size: 36px;
+    color: var(--mhd-text-muted);
+    margin-bottom: 4px;
+}
+
+.mhd-offline-heading {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--mhd-text-color);
+}
+
+.mhd-offline-desc {
+    font-size: 13px;
+    text-align: center;
+    color: var(--mhd-text-muted);
+    margin-top: -6px;
+}
+
+.mhd-offline-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.mhd-offline-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mhd-text-color);
+}
+
+.mhd-offline-input,
+.mhd-offline-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: var(--mhd-font-family);
+    border: 1px solid var(--mhd-border-color);
+    border-radius: 8px;
+    outline: none;
+    color: var(--mhd-text-color);
+    transition: border-color var(--mhd-transition);
+}
+
+.mhd-offline-input:focus,
+.mhd-offline-textarea:focus {
+    border-color: var(--mhd-primary-color);
+}
+
+.mhd-offline-textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.mhd-offline-submit {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--mhd-primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background var(--mhd-transition);
+}
+
+.mhd-offline-submit:hover {
+    background: var(--mhd-primary-hover);
+}
+
+.mhd-offline-success {
+    text-align: center;
+    padding: 20px 0;
+    font-size: 14px;
+    color: #46b450;
+    font-weight: 500;
+}
+
+/* ------------------------------------------------------------------ */
+/*  15. Rich Messages – Buttons                                       */
+/* ------------------------------------------------------------------ */
+.mhd-rich-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.mhd-rich-btn {
+    display: block;
+    width: 100%;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--mhd-primary-color);
+    background: #fff;
+    border: 1px solid var(--mhd-primary-color);
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--mhd-transition), color var(--mhd-transition);
+    font-family: var(--mhd-font-family);
+}
+
+.mhd-rich-btn:hover {
+    background: var(--mhd-primary-color);
+    color: #fff;
+}
+
+/* Rich Messages – Cards */
+.mhd-rich-cards {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 8px 0 4px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mhd-rich-cards::-webkit-scrollbar {
+    height: 4px;
+}
+
+.mhd-rich-cards::-webkit-scrollbar-thumb {
+    background: #d0d0d0;
+    border-radius: 2px;
+}
+
+.mhd-rich-card {
+    min-width: 220px;
+    max-width: 260px;
+    border: 1px solid var(--mhd-border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    background: #fff;
+}
+
+.mhd-rich-card-image {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    display: block;
+}
+
+.mhd-rich-card-body {
+    padding: 12px;
+}
+
+.mhd-rich-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--mhd-text-color);
+    margin-bottom: 4px;
+}
+
+.mhd-rich-card-desc {
+    font-size: 12px;
+    color: var(--mhd-text-muted);
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.mhd-rich-card-action {
+    display: block;
+    padding: 8px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mhd-primary-color);
+    border-top: 1px solid var(--mhd-border-color);
+    text-decoration: none;
+    transition: background var(--mhd-transition);
+}
+
+.mhd-rich-card-action:hover {
+    background: var(--mhd-primary-light);
+}
+
+/* Rich Messages – Slider */
+.mhd-rich-slider {
+    position: relative;
+}
+
+.mhd-rich-slider-track {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0;
+}
+
+.mhd-rich-slider-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--mhd-bg-color);
+    border: 1px solid var(--mhd-border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+    transition: background var(--mhd-transition);
+}
+
+.mhd-rich-slider-nav:hover {
+    background: #f0f0f1;
+}
+
+.mhd-rich-slider-prev { left: -6px; }
+.mhd-rich-slider-next { right: -6px; }
+
+.mhd-rich-slider-nav svg {
+    width: 14px;
+    height: 14px;
+    fill: var(--mhd-text-color);
+}
+
+/* ------------------------------------------------------------------ */
+/*  16. File & Image Attachments                                      */
+/* ------------------------------------------------------------------ */
+.mhd-attachment {
+    margin-top: 6px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.mhd-attachment-image {
+    max-width: 100%;
+    border-radius: 10px;
+    display: block;
+    cursor: pointer;
+    transition: opacity var(--mhd-transition);
+}
+
+.mhd-attachment-image:hover {
+    opacity: 0.9;
+}
+
+.mhd-attachment-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--mhd-border-color);
+    border-radius: 10px;
+    background: #f9f9f9;
+    text-decoration: none;
+    color: var(--mhd-text-color);
+    transition: background var(--mhd-transition);
+}
+
+.mhd-attachment-file:hover {
+    background: #f0f0f1;
+}
+
+.mhd-attachment-file-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--mhd-primary-light);
+    color: var(--mhd-primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mhd-attachment-file-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.mhd-attachment-file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mhd-attachment-file-name {
+    font-size: 13px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mhd-attachment-file-size {
+    font-size: 11px;
+    color: var(--mhd-text-muted);
+}
+
+/* Upload preview */
+.mhd-upload-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f6f7f7;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--mhd-text-color);
+}
+
+.mhd-upload-preview-remove {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--mhd-text-muted);
+    margin-left: auto;
+    transition: background var(--mhd-transition), color var(--mhd-transition);
+}
+
+.mhd-upload-preview-remove:hover {
+    background: #dc3232;
+    color: #fff;
+}
+
+/* ------------------------------------------------------------------ */
+/*  17. Powered-By Footer                                             */
+/* ------------------------------------------------------------------ */
+.mhd-powered-by {
+    text-align: center;
+    padding: 8px 14px;
+    font-size: 11px;
+    color: var(--mhd-text-muted);
+    border-top: 1px solid var(--mhd-border-color);
+    flex-shrink: 0;
+}
+
+.mhd-powered-by a {
+    color: var(--mhd-text-muted);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--mhd-transition);
+}
+
+.mhd-powered-by a:hover {
+    color: var(--mhd-primary-color);
+}
+
+/* ------------------------------------------------------------------ */
+/*  18. Animations                                                    */
+/* ------------------------------------------------------------------ */
+@keyframes mhd-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes mhd-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/*  19. Date Separator                                                */
+/* ------------------------------------------------------------------ */
+.mhd-date-separator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0;
+}
+
+.mhd-date-separator::before,
+.mhd-date-separator::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--mhd-border-color);
+}
+
+.mhd-date-separator-text {
+    font-size: 11px;
+    color: var(--mhd-text-muted);
+    white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/*  20. Image Lightbox                                                */
+/* ------------------------------------------------------------------ */
+.mhd-lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--mhd-transition), visibility var(--mhd-transition);
+    cursor: zoom-out;
+}
+
+.mhd-lightbox-overlay.mhd-lightbox-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mhd-lightbox-overlay img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 6px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.mhd-lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--mhd-transition);
+}
+
+.mhd-lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ------------------------------------------------------------------ */
+/*  21. Responsive – Mobile Full-Width                                */
+/* ------------------------------------------------------------------ */
+@media screen and (max-width: 480px) {
+    .mhd-widget-root {
+        bottom: 0;
+        right: 0;
+        left: 0;
+        z-index: 999999;
+    }
+
+    .mhd-chat-bubble {
+        position: fixed;
+        bottom: var(--mhd-widget-bottom);
+        right: var(--mhd-widget-right);
+    }
+
+    .mhd-chat-window {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        transform: translateY(100%);
+    }
+
+    .mhd-chat-window.mhd-chat-open {
+        transform: translateY(0);
+    }
+
+    .mhd-chat-bubble-tooltip {
+        display: none;
+    }
+
+    .mhd-emoji-picker {
+        left: 0;
+        right: 0;
+        border-radius: var(--mhd-border-radius) var(--mhd-border-radius) 0 0;
+        max-height: 50vh;
+    }
+}
+
+/* Medium screens */
+@media screen and (min-width: 481px) and (max-width: 640px) {
+    :root {
+        --mhd-widget-width: 340px;
+        --mhd-widget-height: 520px;
+    }
+}
